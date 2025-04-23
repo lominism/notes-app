@@ -29,13 +29,20 @@ export default function HomePage() {
       {/* Navbar */}
       <nav className="h-16 w-full sticky top-0 bg-white border-b shadow-sm px-6 py-4 flex items-center justify-between z-50">
         <div>
-          <Link href="/dashboard">
+          <div>
             <img
               src="/images/lomnotes-logo.svg"
               alt="LomNotes Logo"
-              className="h-10 w-auto"
+              className="h-10 w-auto cursor-pointer"
+              onClick={() => {
+                if (auth.currentUser) {
+                  router.push("/dashboard"); // Redirect to dashboard if logged in
+                } else {
+                  router.push("/"); // Redirect to homepage if not logged in
+                }
+              }}
             />
-          </Link>
+          </div>
         </div>
         <div className="flex items-center gap-4">
           <Link
