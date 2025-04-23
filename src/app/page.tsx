@@ -1,10 +1,29 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 export default function HomePage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (auth.currentUser) {
+      router.push("/dashboard"); // Redirect to dashboard if logged in
+    }
+  }, []);
+
+  const handleRedirect = (path: string) => {
+    if (auth.currentUser) {
+      router.push("/dashboard"); // Redirect to dashboard if logged in
+    } else {
+      router.push(path); // Navigate to the intended path
+    }
+  };
+
   return (
     <>
       {/* Navbar */}
@@ -35,12 +54,10 @@ export default function HomePage() {
             orientation="vertical"
             className="mx-2 w-px bg-gray-300 !h-6"
           />
-          <Link href="/login">
-            <Button variant="outline">Log in</Button>
-          </Link>
-          <Link href="/register">
-            <Button>Sign up</Button>
-          </Link>
+          <Button variant="outline" onClick={() => handleRedirect("/login")}>
+            Log in
+          </Button>
+          <Button onClick={() => handleRedirect("/register")}>Sign up</Button>
         </div>
       </nav>
 
@@ -53,9 +70,9 @@ export default function HomePage() {
           <p className="text-lg md:text-xl text-muted-foreground mb-8">
             Your ideas, notes, and tasks — all in one clean, minimal app.
           </p>
-          <Link href="/register">
-            <Button size="lg">Get Started</Button>
-          </Link>
+          <Button size="lg" onClick={() => handleRedirect("/register")}>
+            Get Started
+          </Button>
         </section>
 
         <section className="mt-20 w-full max-w-4xl">

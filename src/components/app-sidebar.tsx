@@ -23,14 +23,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { UserInfo } from "./user-info";
-
-type UserData = {
-  lom: {
-    name: string;
-    email: string;
-    avatar: string;
-  };
-};
+import Link from "next/link";
 
 type NavMainItem = {
   title: string;
@@ -43,14 +36,7 @@ type NavMainItem = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const [userData, setUserData] = React.useState<UserData | null>(null);
   const [navMain, setNavMain] = React.useState<NavMainItem[] | null>(null);
-
-  React.useEffect(() => {
-    fetch("/data/userData.json")
-      .then((response) => response.json())
-      .then((data) => setUserData(data));
-  }, []);
 
   React.useEffect(() => {
     fetch("/data/navMain.json")
@@ -58,15 +44,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       .then((data) => setNavMain(data));
   }, []);
 
-  // Handle loading state in JSX
-  const isLoading = !userData || !navMain;
-
-  console.log("userData", userData);
-
   return (
     <Sidebar {...props}>
       <SidebarHeader className="h-16 shadow">
-        {userData && <UserInfo user={userData.lom} />}
+        <UserInfo />
       </SidebarHeader>
       <SearchForm className="pt-2" />
       <SidebarContent className="gap-0">
@@ -95,7 +76,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       {item.items.map((item) => (
                         <SidebarMenuItem key={item.title}>
                           <SidebarMenuButton asChild isActive={item.isActive}>
-                            <a href={item.url}>{item.title}</a>
+                            <Link href={item.url}>{item.title}</Link>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       ))}
