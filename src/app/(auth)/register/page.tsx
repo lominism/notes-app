@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import {
-  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
 } from "firebase/auth";
@@ -11,29 +11,29 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push("/main");
+      await createUserWithEmailAndPassword(auth, email, password);
+      router.push("/dashboard");
     } catch (err: any) {
-      setError("Invalid email or password");
+      setError("Registration failed: " + err.message);
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleSignUp = async () => {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
       router.push("/dashboard");
     } catch (err: any) {
-      setError("Google login failed: " + err.message);
+      setError("Google sign-in failed: " + err.message);
     }
   };
 
@@ -50,12 +50,12 @@ export default function LoginPage() {
             />
           </Link>
           <p className="mt-1 text-sm text-muted-foreground">
-            Log in to continue using LomNotes
+            Create your account to get started
           </p>
         </div>
 
         {/* Email/Password Form */}
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleRegister} className="space-y-4">
           <input
             type="email"
             placeholder="Email"
@@ -73,8 +73,8 @@ export default function LoginPage() {
             required
           />
           {error && <p className="text-sm text-red-500">{error}</p>}
-          <Button variant="secondary" type="submit" className="w-full">
-            Log in
+          <Button type="submit" className="w-full">
+            Sign up
           </Button>
         </form>
 
@@ -90,7 +90,7 @@ export default function LoginPage() {
 
         {/* Google Sign In */}
         <Button
-          onClick={handleGoogleLogin}
+          onClick={handleGoogleSignUp}
           variant="outline"
           className="w-full"
         >
@@ -99,9 +99,9 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center text-sm text-muted-foreground">
-          Don't have an account?{" "}
-          <Link href="/register" className="text-primary hover:underline">
-            Sign up
+          Already have an account?{" "}
+          <Link href="/login" className="text-primary hover:underline">
+            Log in
           </Link>
         </p>
       </div>

@@ -43,7 +43,7 @@ export function UserInfo({
   const handleLogout = async () => {
     try {
       await logout(); // Call the logout function
-      router.push("/login"); // Redirect to the login page after logout
+      router.push("/"); // Redirect to the login page after logout
     } catch (error) {
       console.error("Logout failed:", error);
     }
