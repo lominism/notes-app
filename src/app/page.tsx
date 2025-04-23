@@ -10,11 +10,13 @@ export default function HomePage() {
       {/* Navbar */}
       <nav className="h-16 w-full sticky top-0 bg-white border-b shadow-sm px-6 py-4 flex items-center justify-between z-50">
         <div>
-          <img
-            src="/images/lomnotes-logo.svg"
-            alt="LomNotes Logo"
-            className="h-10 w-auto"
-          />
+          <Link href="/dashboard">
+            <img
+              src="/images/lomnotes-logo.svg"
+              alt="LomNotes Logo"
+              className="h-10 w-auto"
+            />
+          </Link>
         </div>
         <div className="flex items-center gap-4">
           <Link
@@ -31,7 +33,7 @@ export default function HomePage() {
           </Link>
           <Separator
             orientation="vertical"
-            className="mx-2 w-px bg-stone-600 !h-6"
+            className="mx-2 w-px bg-gray-300 !h-6"
           />
           <Link href="/login">
             <Button variant="outline">Log in</Button>
