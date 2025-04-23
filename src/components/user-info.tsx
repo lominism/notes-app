@@ -9,6 +9,8 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import { logout } from "@/lib/auth"; // Import the logout function
+import { useRouter } from "next/navigation"; // Import useRouter for redirection
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -36,6 +38,16 @@ export function UserInfo({
   };
 }) {
   const { isMobile } = useSidebar();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await logout(); // Call the logout function
+      router.push("/login"); // Redirect to the login page after logout
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   return (
     <SidebarMenu>
@@ -87,7 +99,7 @@ export function UserInfo({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
               <LogOut />
               Log out
             </DropdownMenuItem>

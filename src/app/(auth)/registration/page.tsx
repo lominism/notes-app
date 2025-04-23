@@ -1,29 +1,29 @@
-// filepath: /src/app/login/page.tsx
 "use client";
 
 import { useState } from "react";
-import { login } from "@/lib/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await login(email, password);
-      router.push("/main"); // redirect after login
-    } catch (err) {
-      setError("Invalid email or password");
+      await createUserWithEmailAndPassword(auth, email, password);
+      router.push("/login"); // redirect after registration
+    } catch (err: any) {
+      setError("Registration failed: " + err.message);
     }
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
-      <form onSubmit={handleLogin} className="flex flex-col gap-4">
+      <form onSubmit={handleRegister} className="flex flex-col gap-4">
         <input
           type="email"
           placeholder="Email"
@@ -40,7 +40,7 @@ export default function LoginPage() {
         />
         {error && <p className="text-red-500">{error}</p>}
         <button type="submit" className="bg-blue-500 text-white p-2 rounded">
-          Login
+          Register
         </button>
       </form>
     </div>

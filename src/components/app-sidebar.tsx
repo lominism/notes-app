@@ -65,10 +65,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar {...props}>
-      <SidebarHeader>
+      <SidebarHeader className="h-16 shadow">
         {userData && <UserInfo user={userData.lom} />}
-        <SearchForm />
       </SidebarHeader>
+      <SearchForm className="pt-2" />
       <SidebarContent className="gap-0">
         {/* We create a collapsible SidebarGroup for each parent. */}
         {navMain &&

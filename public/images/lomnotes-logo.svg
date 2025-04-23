@@ -1,0 +1,17 @@
+
+<svg width="420" height="90" viewBox="0 0 380 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Spiral Notebook Icon with sticky note -->
+  <rect x="0" y="20" width="50" height="60" rx="5" fill="#2C3E50"/>
+  <circle cx="5" cy="30" r="2" fill="white"/>
+  <circle cx="5" cy="40" r="2" fill="white"/>
+  <circle cx="5" cy="50" r="2" fill="white"/>
+  <circle cx="5" cy="60" r="2" fill="white"/>
+  <circle cx="5" cy="70" r="2" fill="white"/>
+  <rect x="18" y="32" width="20" height="20" rx="2" fill="#F4C542"/>
+  <path d="M 18 32 Q 28 32, 18 42 Z" fill="#F4C542" opacity="0.6"/>
+
+  <!-- LomNotes (single tspan for joined text) -->
+  <text x="55" y="75" font-family="Wensley, serif" font-size="75" font-weight="bold" fill="#2C3E50">
+    Lom<tspan fill="#F4C542">Notes</tspan>
+  </text>
+</svg>
