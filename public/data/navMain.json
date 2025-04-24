@@ -23,5 +23,15 @@
           "url": "#"
         }
       ]
+    },
+    {
+      "title": "Test Area",
+      "url": "#",
+      "items": [
+        {
+          "title": "Books",
+          "url": "/books"
+        }
+      ]
     }
   ]
