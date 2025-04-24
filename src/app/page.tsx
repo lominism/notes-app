@@ -4,12 +4,27 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useEffect, useState } from "react";
+import { auth } from "@/lib/firebase"; // Import your Firebase auth instance
 
 export default function HomePage() {
   const router = useRouter();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  const handleRedirect = () => {
-    router.push("/dashboard"); // Navigate directly to the dashboard
+  // Check if the user is logged in
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setIsLoggedIn(!!user); // Set to true if a user is logged in
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleRedirect = (path: string) => {
+    if (isLoggedIn) {
+      router.push("/dashboard"); // Redirect to dashboard if logged in
+    } else {
+      router.push(path); // Otherwise, navigate to the specified path
+    }
   };
 
   return (
@@ -21,8 +36,7 @@ export default function HomePage() {
             <img
               src="/images/lomnotes-logo.svg"
               alt="LomNotes Logo"
-              className="h-10 w-auto cursor-pointer"
-              onClick={() => router.push("/dashboard")}
+              className="h-10 w-auto"
             />
           </div>
         </div>
@@ -43,10 +57,10 @@ export default function HomePage() {
             orientation="vertical"
             className="mx-2 w-px bg-gray-300 !h-6"
           />
-          <Button variant="outline" onClick={handleRedirect}>
+          <Button variant="outline" onClick={() => handleRedirect("/login")}>
             Log in
           </Button>
-          <Button onClick={handleRedirect}>Sign up</Button>
+          <Button onClick={() => handleRedirect("/register")}>Sign up</Button>
         </div>
       </nav>
 
@@ -59,7 +73,7 @@ export default function HomePage() {
           <p className="text-lg md:text-xl text-muted-foreground mb-8">
             Your ideas, notes, and tasks — all in one clean, minimal app.
           </p>
-          <Button size="lg" onClick={handleRedirect}>
+          <Button size="lg" onClick={() => handleRedirect("/register")}>
             Get Started
           </Button>
         </section>

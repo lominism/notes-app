@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { auth, storage } from "@/lib/firebase";
-import { updateProfile } from "firebase/auth";
+import { updateProfile, onAuthStateChanged } from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,29 +10,40 @@ import { Label } from "@/components/ui/label";
 import Image from "next/image";
 
 export default function SettingsPage() {
-  const user = auth.currentUser;
+  const [user, setUser] = useState(auth.currentUser);
   const [name, setName] = useState(user?.displayName ?? "");
   const [photoURL, setPhotoURL] = useState(user?.photoURL ?? "");
   const [preview, setPreview] = useState(user?.photoURL ?? "");
   const [success, setSuccess] = useState(false);
   const [uploading, setUploading] = useState(false);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Listen for user updates
   useEffect(() => {
-    setSuccess(false);
-  }, [name]);
+    const unsubscribe = onAuthStateChanged(auth, (updatedUser) => {
+      setUser(updatedUser);
+      setName(updatedUser?.displayName ?? "");
+      setPhotoURL(updatedUser?.photoURL ?? "");
+      setPreview(updatedUser?.photoURL ?? "");
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
     setUploading(true);
-
     const storageRef = ref(storage, `profile-pictures/${user.uid}.jpg`);
     await uploadBytes(storageRef, file);
     const url = await getDownloadURL(storageRef);
 
-    setPhotoURL(url);
-    setPreview(URL.createObjectURL(file));
+    // Add a cache-busting query parameter
+    const cacheBustedUrl = `${url}?t=${Date.now()}`;
+
+    setPhotoURL(cacheBustedUrl);
+    setPreview(cacheBustedUrl);
     setUploading(false);
   };
 
@@ -45,17 +56,11 @@ export default function SettingsPage() {
         photoURL: photoURL,
       });
 
-      // Reload the user data to reflect changes in auth.currentUser
-      await user.reload();
-
       setSuccess(true);
     } catch (error) {
       console.error("Error updating profile:", error);
     }
   };
-
-  const fallbackImage = "/images/evil-morty.avif";
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
     <div className="max-w-xl mx-auto p-6">
@@ -70,18 +75,24 @@ export default function SettingsPage() {
           className="relative group"
           aria-label="Change profile picture"
         >
-          <Image
-            src={preview || fallbackImage}
-            alt="Profile preview"
-            width={96}
-            height={96}
-            className="rounded-full border shadow transition-opacity group-hover:opacity-80"
-          />
+          {preview?.trim() ? (
+            <Image
+              src={preview}
+              alt="Profile preview"
+              width={96}
+              height={96}
+              className="rounded-full border shadow transition-opacity group-hover:opacity-80 object-cover"
+              style={{ aspectRatio: "1 / 1" }} // Ensures the image is square
+            />
+          ) : (
+            <div className="h-24 w-24 rounded-full border shadow flex items-center justify-center bg-muted text-muted-foreground text-sm">
+              Upload
+            </div>
+          )}
           <span className="absolute bottom-0 right-0 text-xs bg-primary text-white rounded px-1 py-0.5 opacity-70 group-hover:opacity-100">
             Upload
           </span>
         </button>
-
         <input
           ref={fileInputRef}
           type="file"
@@ -89,7 +100,6 @@ export default function SettingsPage() {
           className="hidden"
           onChange={handleImageUpload}
         />
-
         {uploading && (
           <p className="text-sm text-muted-foreground mt-1">Uploading...</p>
         )}
