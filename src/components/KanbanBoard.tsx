@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   DndContext,
   closestCenter,
@@ -13,6 +13,18 @@ import { useDroppable } from "@dnd-kit/core";
 import { DraggableCard } from "@/components/DraggableCard";
 import { Button } from "@/components/ui/button";
 import { nanoid } from "nanoid";
+import { db, auth } from "@/lib/firebase"; // Import Firestore and Auth instances
+import {
+  collection,
+  doc,
+  onSnapshot,
+  query,
+  where,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
+} from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 
 type KanbanColumn = {
   id: string;
@@ -20,30 +32,40 @@ type KanbanColumn = {
   items: { id: string; content: string }[];
 };
 
-const defaultKanban: KanbanColumn[] = [
-  {
-    id: "todo",
-    title: "To Do",
-    items: [{ id: "1", content: "Example task" }],
-  },
-  {
-    id: "inProgress",
-    title: "In Progress",
-    items: [{ id: "2", content: "In progress task" }],
-  },
-  {
-    id: "done",
-    title: "Done",
-    items: [{ id: "3", content: "Finished task" }],
-  },
-];
-
 export default function KanbanBoard() {
-  const [kanban, setKanban] = useState<KanbanColumn[]>(defaultKanban);
-
+  const [kanban, setKanban] = useState<KanbanColumn[]>([]);
+  const [uid, setUid] = useState<string | null>(null);
   const sensors = useSensors(useSensor(PointerSensor));
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  // Watch for authentication state changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUid(user?.uid || null);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Fetch Kanban data for the authenticated user
+  useEffect(() => {
+    if (!uid) return;
+
+    const kanbanQuery = query(
+      collection(db, "kanbanColumns"),
+      where("uid", "==", uid) // Filter by the user's uid
+    );
+
+    const unsubscribe = onSnapshot(kanbanQuery, (snapshot) => {
+      const columns = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as KanbanColumn[];
+      setKanban(columns);
+    });
+
+    return () => unsubscribe();
+  }, [uid]);
+
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -56,39 +78,31 @@ export default function KanbanBoard() {
     const itemToMove = fromColumn.items.find((item) => item.id === active.id);
     if (!itemToMove) return;
 
-    const updatedKanban = kanban.map((col) => {
-      if (col.id === fromColumn.id) {
-        return {
-          ...col,
-          items: col.items.filter((item) => item.id !== active.id),
-        };
-      }
-      if (col.id === toColumn.id) {
-        return {
-          ...col,
-          items: [...col.items, itemToMove],
-        };
-      }
-      return col;
-    });
+    // Update Firestore
+    const fromColumnRef = doc(db, "kanbanColumns", fromColumn.id);
+    const toColumnRef = doc(db, "kanbanColumns", toColumn.id);
 
-    setKanban(updatedKanban);
+    await updateDoc(fromColumnRef, {
+      items: arrayRemove(itemToMove),
+    });
+    await updateDoc(toColumnRef, {
+      items: arrayUnion(itemToMove),
+    });
   };
 
-  const handleAddCard = (columnId: string) => {
+  const handleAddCard = async (columnId: string) => {
     const newCard = {
       id: nanoid(),
       content: "New task",
     };
 
-    const updatedKanban = kanban.map((col) =>
-      col.id === columnId ? { ...col, items: [...col.items, newCard] } : col
-    );
-
-    setKanban(updatedKanban);
+    const columnRef = doc(db, "kanbanColumns", columnId);
+    await updateDoc(columnRef, {
+      items: arrayUnion(newCard),
+    });
   };
 
-  const handleUpdateCard = (id: string, newContent: string) => {
+  const handleUpdateCard = async (id: string, newContent: string) => {
     const updatedKanban = kanban.map((col) => ({
       ...col,
       items: col.items.map((item) =>
@@ -96,14 +110,34 @@ export default function KanbanBoard() {
       ),
     }));
     setKanban(updatedKanban);
+
+    // Update Firestore
+    const column = kanban.find((col) =>
+      col.items.some((item) => item.id === id)
+    );
+    if (!column) return;
+
+    const columnRef = doc(db, "kanbanColumns", column.id);
+    const updatedItems = column.items.map((item) =>
+      item.id === id ? { ...item, content: newContent } : item
+    );
+
+    await updateDoc(columnRef, { items: updatedItems });
   };
 
-  const handleDeleteCard = (id: string) => {
-    const updatedKanban = kanban.map((col) => ({
-      ...col,
-      items: col.items.filter((item) => item.id !== id),
-    }));
-    setKanban(updatedKanban);
+  const handleDeleteCard = async (id: string) => {
+    const column = kanban.find((col) =>
+      col.items.some((item) => item.id === id)
+    );
+    if (!column) return;
+
+    const itemToDelete = column.items.find((item) => item.id === id);
+    if (!itemToDelete) return;
+
+    const columnRef = doc(db, "kanbanColumns", column.id);
+    await updateDoc(columnRef, {
+      items: arrayRemove(itemToDelete),
+    });
   };
 
   return (
