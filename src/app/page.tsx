@@ -2,26 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 export default function HomePage() {
   const router = useRouter();
 
-  useEffect(() => {
-    if (auth.currentUser) {
-      router.push("/dashboard"); // Redirect to dashboard if logged in
-    }
-  }, []);
-
-  const handleRedirect = (path: string) => {
-    if (auth.currentUser) {
-      router.push("/dashboard"); // Redirect to dashboard if logged in
-    } else {
-      router.push(path); // Navigate to the intended path
-    }
+  const handleRedirect = () => {
+    router.push("/dashboard"); // Navigate directly to the dashboard
   };
 
   return (
@@ -34,13 +22,7 @@ export default function HomePage() {
               src="/images/lomnotes-logo.svg"
               alt="LomNotes Logo"
               className="h-10 w-auto cursor-pointer"
-              onClick={() => {
-                if (auth.currentUser) {
-                  router.push("/dashboard"); // Redirect to dashboard if logged in
-                } else {
-                  router.push("/"); // Redirect to homepage if not logged in
-                }
-              }}
+              onClick={() => router.push("/dashboard")}
             />
           </div>
         </div>
@@ -61,10 +43,10 @@ export default function HomePage() {
             orientation="vertical"
             className="mx-2 w-px bg-gray-300 !h-6"
           />
-          <Button variant="outline" onClick={() => handleRedirect("/login")}>
+          <Button variant="outline" onClick={handleRedirect}>
             Log in
           </Button>
-          <Button onClick={() => handleRedirect("/register")}>Sign up</Button>
+          <Button onClick={handleRedirect}>Sign up</Button>
         </div>
       </nav>
 
@@ -77,7 +59,7 @@ export default function HomePage() {
           <p className="text-lg md:text-xl text-muted-foreground mb-8">
             Your ideas, notes, and tasks — all in one clean, minimal app.
           </p>
-          <Button size="lg" onClick={() => handleRedirect("/register")}>
+          <Button size="lg" onClick={handleRedirect}>
             Get Started
           </Button>
         </section>
