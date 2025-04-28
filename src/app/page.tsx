@@ -78,9 +78,13 @@ export default function HomePage() {
           </Button>
         </section>
 
-        <section className="mt-20 w-full max-w-4xl">
-          <div className="w-full h-[300px] bg-muted rounded-xl flex items-center justify-center text-muted-foreground">
-            App Screenshot / Demo
+        <section className="mt-20 w-full max-w-2xl">
+          <div className="w-full h-[300px] rounded-xl flex items-center justify-center">
+            <img
+              src="/images/app-preview.jpg"
+              alt="App Preview"
+              className="rounded-xl"
+            />
           </div>
         </section>
 
