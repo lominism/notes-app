@@ -11,12 +11,13 @@
       ]
     },
     {
-      "title": "Notes",
+      "title": "CRM (not fully working yet)",
       "url": "#",
       "items": [
         {
-          "title": "Note 1",
-          "url": "#"
+          "title": "Leads",
+          "url": "/leads",
+          "isActive": true
         }
       ]
     },
