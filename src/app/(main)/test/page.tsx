@@ -1,91 +1,71 @@
 "use client";
 
-import { doc, setDoc } from "firebase/firestore";
+import { collection, doc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { useEffect } from "react";
 
-const writeToFirestore = async (uid: string) => {
-  try {
-    // References to the "todo", "inProgress", and "done" documents in the "columns" subcollection under "default"
-    const todoRef = doc(
-      db,
-      "users",
-      uid,
-      "kanban",
-      "default",
-      "columns",
-      "todo"
-    );
-    const inProgressRef = doc(
-      db,
-      "users",
-      uid,
-      "kanban",
-      "default",
-      "columns",
-      "inProgress"
-    );
-    const doneRef = doc(
-      db,
-      "users",
-      uid,
-      "kanban",
-      "default",
-      "columns",
-      "done"
-    );
+const mockLeads = [
+  {
+    name: "David Martinez",
+    company: "Cloud Solutions",
+    email: "david@cloudsolutions.com",
+    phone: "+1 (555) 567-8901",
+    status: "New",
+    source: "Email Campaign",
+    temperature: "Cold",
+    value: 40000,
+    assignedTo: "David Brown",
+    lastContact: "2023-04-01",
+    notes: "Initial contact made. Follow-up required.",
+  },
+  {
+    name: "Emily Davis",
+    company: "Tech Solutions",
+    email: "emily@techsolutions.com",
+    phone: "+1 (555) 987-6543",
+    status: "New",
+    source: "Referral",
+    temperature: "Warm",
+    value: 25000,
+    assignedTo: "Mike Wilson",
+    lastContact: "2023-04-12",
+    notes: "Looking for a comprehensive solution. Price sensitive.",
+  },
+  {
+    name: "John Smith",
+    company: "Acme Corp",
+    email: "john@acmecorp.com",
+    phone: "+1 (555) 123-4567",
+    status: "Proposal",
+    source: "Website",
+    temperature: "Hot",
+    value: 15000,
+    assignedTo: "Sarah Johnson",
+    lastContact: "2023-04-15",
+    notes: "Client is interested in our enterprise solution.",
+  },
+];
 
-    // Data for each column
-    const todoData = {
-      title: "To Do",
-      tasks: [
-        {
-          id: "test-task-1",
-          title: "Test Task in To Do",
-        },
-      ],
-    };
+export default function UploadMockData() {
+  const uploadData = async () => {
+    const leadsCollection = collection(db, "leads");
 
-    const inProgressData = {
-      title: "In Progress",
-      tasks: [
-        {
-          id: "test-task-2",
-          title: "Test Task in Progress",
-        },
-      ],
-    };
+    for (const lead of mockLeads) {
+      const leadRef = doc(leadsCollection); // Firestore will generate a unique document ID
+      await setDoc(leadRef, lead); // Upload the lead data without an `id` field
+    }
 
-    const doneData = {
-      title: "Done",
-      tasks: [
-        {
-          id: "test-task-3",
-          title: "Test Task in Done",
-        },
-      ],
-    };
+    console.log("Mock data uploaded successfully!");
+  };
 
-    // Write the data to Firestore
-    await setDoc(todoRef, todoData);
-    console.log("Data written successfully to Firestore:", todoRef.path);
-
-    await setDoc(inProgressRef, inProgressData);
-    console.log("Data written successfully to Firestore:", inProgressRef.path);
-
-    await setDoc(doneRef, doneData);
-    console.log("Data written successfully to Firestore:", doneRef.path);
-  } catch (error) {
-    console.error("Error writing to Firestore:", error);
-  }
-};
-
-// React component to call the function
-export default function TestPage() {
-  useEffect(() => {
-    const uid = "2eGNTZBSTNTima0T12xGXAvHDGa2"; // Replace with the actual UID
-    writeToFirestore(uid);
-  }, []);
-
-  return <p>Writing data to Firestore...</p>;
+  return (
+    <div>
+      <h1>Upload Mock Data</h1>
+      <button
+        onClick={uploadData}
+        className="bg-blue-500 text-white px-4 py-2 rounded"
+      >
+        Upload Data
+      </button>
+    </div>
+  );
 }

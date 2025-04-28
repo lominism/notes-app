@@ -39,6 +39,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 // Define the Lead type for better type safety
 export type Lead = {
@@ -66,6 +68,7 @@ interface LeadDetailsModalProps {
   lead: Lead | null;
   isOpen: boolean;
   onClose: () => void;
+  onUpdateLead?: (updatedLead: Lead) => void;
 }
 
 const statusColors: Record<string, string> = {
@@ -87,6 +90,7 @@ export function LeadDetailsModal({
   lead,
   isOpen,
   onClose,
+  onUpdateLead,
 }: LeadDetailsModalProps) {
   // Initialize state
   const [isEditingNotes, setIsEditingNotes] = useState(false);
@@ -108,15 +112,48 @@ export function LeadDetailsModal({
   if (!lead) return null;
 
   // Function to save notes
-  const saveNotes = () => {
-    setIsEditingNotes(false);
-    console.log("Saving notes:", notesContent);
+  const saveNotes = async () => {
+    if (!lead) return;
+
+    try {
+      const leadRef = doc(db, "leads", lead.id); // Use the Firestore document ID
+      await updateDoc(leadRef, { notes: notesContent }); // Update the notes field in Firestore
+      setIsEditingNotes(false); // Exit editing mode
+      console.log("Notes saved successfully!");
+    } catch (error) {
+      console.error("Error saving notes:", error);
+    }
   };
 
   // Function to save details
-  const saveDetails = () => {
-    setIsEditingDetails(false);
-    console.log("Saving details:", editedLead);
+  const saveDetails = async () => {
+    if (!editedLead) return;
+
+    try {
+      const leadRef = doc(db, "leads", editedLead.id);
+      await updateDoc(leadRef, {
+        name: editedLead.name,
+        company: editedLead.company,
+        email: editedLead.email,
+        phone: editedLead.phone,
+        status: editedLead.status,
+        source: editedLead.source,
+        temperature: editedLead.temperature,
+        value: editedLead.value,
+        assignedTo: editedLead.assignedTo,
+        lastContact: editedLead.lastContact,
+      });
+
+      // Call the parent function to update the selected lead
+      if (onUpdateLead) {
+        onUpdateLead(editedLead);
+      }
+
+      setIsEditingDetails(false);
+      console.log("Details saved successfully!");
+    } catch (error) {
+      console.error("Error saving details:", error);
+    }
   };
 
   // Function to handle input changes
