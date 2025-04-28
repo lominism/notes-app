@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -77,12 +77,24 @@ export default function LeadsTable() {
     setIsModalOpen(true);
   };
 
-  // Function to updated the selectedLead
+  // Function to update the selectedLead
   const updateLead = (updatedLead: Lead) => {
     setLeads((prevLeads) =>
       prevLeads.map((lead) => (lead.id === updatedLead.id ? updatedLead : lead))
     );
     setSelectedLead(updatedLead); // Update the selected lead
+  };
+
+  // Function to delete a lead
+  const deleteLead = async (leadId: string) => {
+    try {
+      const leadDocRef = doc(db, "leads", leadId); // Reference to the document
+      await deleteDoc(leadDocRef); // Delete the document from Firestore
+      setLeads((prevLeads) => prevLeads.filter((lead) => lead.id !== leadId)); // Update the state
+      console.log(`Lead with ID ${leadId} deleted successfully.`);
+    } catch (error) {
+      console.error("Error deleting lead:", error);
+    }
   };
 
   // Filter leads based on search term and filters
@@ -248,7 +260,10 @@ export default function LeadsTable() {
                           View Details
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600">
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onClick={() => deleteLead(lead.id)} // Call deleteLead
+                        >
                           Delete Lead
                         </DropdownMenuItem>
                       </DropdownMenuContent>
