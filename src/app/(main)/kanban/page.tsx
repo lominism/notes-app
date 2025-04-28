@@ -7,8 +7,12 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverlay,
 } from "@dnd-kit/core";
 import { KanbanColumn } from "@/components/KanbanColumn";
+import { KanbanCard } from "@/components/KanbanCard";
 import {
   collection,
   getDocs,
@@ -16,6 +20,7 @@ import {
   arrayUnion,
   arrayRemove,
   doc,
+  setDoc,
 } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -34,10 +39,18 @@ type Column = {
 export default function KanbanPage() {
   const [columns, setColumns] = useState<Column[]>([]);
   const [uid, setUid] = useState<string | null>(null);
+  const [activeTask, setActiveTask] = useState<Task | null>(null); // Track the currently dragged task
 
   const sensors = useSensors(useSensor(PointerSensor));
 
-  // Fetch Kanban board data from Firestore
+  const columnOrder = ["To Do", "In Progress", "Done"];
+  const defaultColumns: Column[] = [
+    { id: "todo", title: "To Do", tasks: [] },
+    { id: "in-progress", title: "In Progress", tasks: [] },
+    { id: "done", title: "Done", tasks: [] },
+  ];
+
+  // Fetch Kanban data from Firestore
   const fetchKanban = async (userId: string) => {
     const kanbanRef = collection(
       db,
@@ -49,12 +62,28 @@ export default function KanbanPage() {
     );
     const snapshot = await getDocs(kanbanRef);
 
-    const loadedColumns: Column[] = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...(doc.data() as Omit<Column, "id">),
-    }));
+    if (snapshot.empty) {
+      // If no columns exist, initialize with default columns
+      setColumns(defaultColumns);
 
-    setColumns(loadedColumns);
+      // Optionally save the default columns to Firestore
+      for (const column of defaultColumns) {
+        const columnRef = doc(kanbanRef, column.id);
+        await setDoc(columnRef, { title: column.title, tasks: column.tasks });
+      }
+    } else {
+      const loadedColumns: Column[] = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Omit<Column, "id">),
+      }));
+
+      // Sort columns based on predefined order
+      const sortedColumns = loadedColumns.sort(
+        (a, b) => columnOrder.indexOf(a.title) - columnOrder.indexOf(b.title)
+      );
+
+      setColumns(sortedColumns);
+    }
   };
 
   useEffect(() => {
@@ -71,8 +100,9 @@ export default function KanbanPage() {
     return () => unsubscribe();
   }, []);
 
+  // Add a new card
   const handleAddCard = async (columnId: string) => {
-    if (!uid) return;
+    if (!uid) throw new Error("User ID is not available");
 
     const newTask = {
       id: `task-${Date.now()}`,
@@ -97,8 +127,11 @@ export default function KanbanPage() {
         col.id === columnId ? { ...col, tasks: [...col.tasks, newTask] } : col
       )
     );
+
+    return newTask.id;
   };
 
+  // Edit an existing card
   const handleEditCard = async (
     columnId: string,
     taskId: string,
@@ -140,7 +173,7 @@ export default function KanbanPage() {
             ? {
                 ...col,
                 tasks: col.tasks.map((task) =>
-                  task.id === taskId ? { ...task, title: newTitle } : task
+                  task.id === taskId ? updatedTask : task
                 ),
               }
             : col
@@ -151,6 +184,7 @@ export default function KanbanPage() {
     }
   };
 
+  // Delete a card
   const handleDeleteCard = async (columnId: string, taskId: string) => {
     if (!uid) return;
 
@@ -192,10 +226,99 @@ export default function KanbanPage() {
     }
   };
 
+  // Handle drag start
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+
+    // Find the task being dragged
+    const sourceColumn = columns.find((col) =>
+      col.tasks.some((task) => task.id === active.id)
+    );
+    const task = sourceColumn?.tasks.find((task) => task.id === active.id);
+
+    if (task) {
+      setActiveTask(task); // Set the active task only if a drag starts
+    }
+  };
+
+  // Handle drag end
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    setActiveTask(null); // Clear the active task after drag ends
+
+    if (!over || active.id === over.id) return;
+
+    const sourceColumn = columns.find((col) =>
+      col.tasks.some((task) => task.id === active.id)
+    );
+    const destinationColumn = columns.find((col) => col.id === over.id);
+
+    if (!sourceColumn || !destinationColumn) return;
+
+    const taskToMove = sourceColumn.tasks.find((task) => task.id === active.id);
+    if (!taskToMove) return;
+
+    // Optimistically update local state
+    setColumns((prev) =>
+      prev.map((col) => {
+        if (col.id === sourceColumn.id) {
+          return {
+            ...col,
+            tasks: col.tasks.filter((task) => task.id !== taskToMove.id),
+          };
+        }
+        if (col.id === destinationColumn.id) {
+          return {
+            ...col,
+            tasks: [...col.tasks, taskToMove],
+          };
+        }
+        return col;
+      })
+    );
+
+    // Update Firestore
+    const sourceColumnRef = doc(
+      db,
+      "users",
+      uid!,
+      "kanban",
+      "default",
+      "columns",
+      sourceColumn.id
+    );
+    const destinationColumnRef = doc(
+      db,
+      "users",
+      uid!,
+      "kanban",
+      "default",
+      "columns",
+      destinationColumn.id
+    );
+
+    try {
+      await updateDoc(sourceColumnRef, {
+        tasks: arrayRemove(taskToMove),
+      });
+      await updateDoc(destinationColumnRef, {
+        tasks: arrayUnion(taskToMove),
+      });
+    } catch (error) {
+      console.error("Error moving task:", error);
+    }
+  };
+
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Kanban Board</h1>
-      <DndContext sensors={sensors} collisionDetection={closestCenter}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart} // Track the dragged task
+        onDragEnd={handleDragEnd} // Handle drag-and-drop logic
+      >
         <div className="flex gap-4">
           {columns.map((column) => (
             <KanbanColumn
@@ -203,9 +326,17 @@ export default function KanbanPage() {
               column={column}
               onAddCard={handleAddCard}
               onEditCard={handleEditCard}
+              onDeleteCard={handleDeleteCard}
             />
           ))}
         </div>
+        <DragOverlay>
+          {activeTask ? (
+            <div className="bg-white p-2 rounded shadow">
+              {activeTask.title}
+            </div>
+          ) : null}
+        </DragOverlay>
       </DndContext>
     </div>
   );

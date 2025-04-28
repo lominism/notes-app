@@ -1,8 +1,9 @@
 "use client";
 
 import { useDroppable } from "@dnd-kit/core";
-import { SortableItem } from "@/components/SortableItem";
 import { Button } from "@/components/ui/button";
+import { KanbanCard } from "@/components/KanbanCard";
+import { useState } from "react";
 
 type Task = {
   id: string;
@@ -19,34 +20,44 @@ export function KanbanColumn({
   column,
   onAddCard,
   onEditCard,
+  onDeleteCard,
 }: {
   column: Column;
-  onAddCard: (columnId: string) => Promise<void>;
+  onAddCard: (columnId: string) => Promise<string>;
   onEditCard: (
     columnId: string,
     taskId: string,
     newTitle: string
   ) => Promise<void>;
+  onDeleteCard: (columnId: string, taskId: string) => Promise<void>;
 }) {
   const { setNodeRef } = useDroppable({ id: column.id });
+  const [newCardId, setNewCardId] = useState<string | null>(null);
 
   return (
     <div
-      ref={setNodeRef}
-      className="w-64 bg-gray-100 rounded-lg shadow p-4 flex flex-col gap-2"
+      ref={setNodeRef} // Make the column droppable
+      className="w-80 bg-gray-100 rounded-lg shadow p-4 flex flex-col gap-2"
     >
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-lg font-semibold">{column.title}</h2>
-        <Button size="sm" onClick={() => onAddCard(column.id)}>
+        <Button
+          size="sm"
+          onClick={async () => {
+            const newId = await onAddCard(column.id);
+            setNewCardId(newId); // <--- SET the newCardId to match the newly added task id
+          }}
+        >
           +
         </Button>
       </div>
       <div className="flex flex-col gap-2">
         {column.tasks.map((task) => (
-          <SortableItem
+          <KanbanCard
             key={task.id}
-            id={task.id}
             task={task}
+            isNew={task.id === newCardId}
+            onDelete={() => onDeleteCard(column.id, task.id)}
             onEdit={(newTitle) => onEditCard(column.id, task.id, newTitle)}
           />
         ))}
