@@ -343,7 +343,7 @@ export function LeadDetailsModal({
                       </div>
                       <div className="space-y-1">
                         <label htmlFor="value" className="text-sm font-medium">
-                          Value ($)
+                          Value (฿)
                         </label>
                         <Input
                           id="value"
@@ -431,7 +431,7 @@ export function LeadDetailsModal({
                         <DollarSign className="h-4 w-4 mr-2 text-muted-foreground" />
                         <span className="font-medium">Value:</span>
                         <span className="ml-2">
-                          ${lead.value.toLocaleString()}
+                          ฿{lead.value.toLocaleString()}
                         </span>
                       </div>
                       <div className="flex items-center">
