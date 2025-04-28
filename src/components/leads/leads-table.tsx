@@ -116,7 +116,75 @@ export default function LeadsTable() {
       {/* The rest of your LeadsTable component remains unchanged */}
       <CardHeader>
         <CardTitle>All Leads</CardTitle>
-        {/* Filters and search bar */}
+        <div className="flex flex-col space-y-2 md:flex-row md:items-center md:justify-between md:space-y-0">
+          <div className="relative w-full md:w-64">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search leads..."
+              className="pl-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center space-x-1">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">Status:</span>
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[130px]">
+                <SelectValue placeholder="All Statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                {statuses.map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {status}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <div className="flex items-center space-x-1">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">Temp:</span>
+            </div>
+            <Select
+              value={temperatureFilter}
+              onValueChange={setTemperatureFilter}
+            >
+              <SelectTrigger className="w-[130px]">
+                <SelectValue placeholder="All Temperatures" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Temperatures</SelectItem>
+                {temperatures.map((temp) => (
+                  <SelectItem key={temp} value={temp}>
+                    {temp}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <div className="flex items-center space-x-1">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">Source:</span>
+            </div>
+            <Select value={sourceFilter} onValueChange={setSourceFilter}>
+              <SelectTrigger className="w-[130px]">
+                <SelectValue placeholder="All Sources" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Sources</SelectItem>
+                {sources.map((source) => (
+                  <SelectItem key={source} value={source}>
+                    {source}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="rounded-md border">
