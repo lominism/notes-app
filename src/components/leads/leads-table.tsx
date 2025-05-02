@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -47,7 +54,11 @@ const temperatureColors: Record<string, string> = {
   Cold: "bg-blue-100 text-blue-800",
 };
 
-export default function LeadsTable() {
+export default function LeadsTable({
+  selectedGroup,
+}: {
+  selectedGroup: string | null;
+}) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -60,7 +71,13 @@ export default function LeadsTable() {
   useEffect(() => {
     const fetchLeads = async () => {
       const leadsCollection = collection(db, "leads");
-      const snapshot = await getDocs(leadsCollection);
+
+      // Query leads based on the selected group
+      const q = selectedGroup
+        ? query(leadsCollection, where("group", "==", selectedGroup))
+        : leadsCollection; // If no group is selected, fetch all leads
+
+      const snapshot = await getDocs(q);
       const fetchedLeads = snapshot.docs.map((doc) => ({
         id: doc.id, // Use Firestore document ID as the lead ID
         ...doc.data(),
@@ -69,7 +86,7 @@ export default function LeadsTable() {
     };
 
     fetchLeads();
-  }, []);
+  }, [selectedGroup]); // Refetch leads when selectedGroup changes
 
   // Function to open the modal with a specific lead
   const openLeadDetails = (lead: Lead) => {
@@ -125,7 +142,6 @@ export default function LeadsTable() {
 
   return (
     <Card>
-      {/* The rest of your LeadsTable component remains unchanged */}
       <CardHeader>
         <CardTitle>All Leads</CardTitle>
         <div className="flex flex-col space-y-2 md:flex-row md:items-center md:justify-between md:space-y-0">
