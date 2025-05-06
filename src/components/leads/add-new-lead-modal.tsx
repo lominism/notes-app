@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { collection, doc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import {
@@ -42,9 +42,11 @@ const statusColors: Record<string, string> = {
 export function AddNewLeadModal({
   isOpen,
   onClose,
+  selectedGroup,
 }: {
   isOpen: boolean;
   onClose: () => void;
+  selectedGroup: string | null;
 }) {
   const [newLead, setNewLead] = useState({
     name: "",
@@ -58,6 +60,7 @@ export function AddNewLeadModal({
     assignedTo: "",
     lastContact: new Date().toISOString().split("T")[0],
     notes: "",
+    group: selectedGroup,
   });
 
   const handleInputChange = (field: string, value: string | number) => {
@@ -67,13 +70,28 @@ export function AddNewLeadModal({
     }));
   };
 
+  // Sync the group field with the selectedGroup prop
+  useEffect(() => {
+    setNewLead((prev) => ({
+      ...prev,
+      group: selectedGroup, // Update the group field whenever selectedGroup changes
+    }));
+  }, [selectedGroup]);
+
+  // This adds a new const "leadWithID" to fix what happened with useEffect
+  // I still don't undersstand how it fixed it
   const saveNewLead = async () => {
     try {
       const newLeadRef = doc(collection(db, "leads")); // Generate a new document reference
-      await setDoc(newLeadRef, {
+
+      // Ensure the source field has a default value if empty
+      const leadWithId = {
         ...newLead,
-        id: newLeadRef.id, // Add the generated ID to the lead
-      });
+        source: newLead.source.trim() === "" ? "none" : newLead.source, // Default to "none" if empty because of SELECT ISSUE
+        id: newLeadRef.id, // Set the generated document ID as the lead's ID
+      };
+
+      await setDoc(newLeadRef, leadWithId); // Save the lead with the ID
       console.log("New lead added successfully!");
       onClose(); // Close the modal after saving
     } catch (error) {

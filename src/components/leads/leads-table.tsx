@@ -140,10 +140,12 @@ export default function LeadsTable({
     new Set(leads.map((lead) => lead.temperature))
   );
 
+  console.log("sources", sources);
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>All Leads</CardTitle>
+        {/* <CardTitle>Leads</CardTitle> was removed for now*/}
         <div className="flex flex-col space-y-2 md:flex-row md:items-center md:justify-between md:space-y-0">
           <div className="relative w-full md:w-64">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -257,7 +259,7 @@ export default function LeadsTable({
                   </TableCell>
                   <TableCell>{lead.source}</TableCell>
                   <TableCell className="text-right">
-                    ${lead.value.toLocaleString()}
+                    ฿{lead.value.toLocaleString()}
                   </TableCell>
                   <TableCell>
                     {new Date(lead.lastContact).toLocaleDateString()}

@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/select";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { group } from "console";
 
 // Define the Lead type for better type safety
 export type Lead = {
@@ -54,6 +55,7 @@ export type Lead = {
   temperature: "Hot" | "Warm" | "Cold";
   value: number;
   assignedTo: string;
+  group: string;
   lastContact: string;
   notes?: string;
   activities?: {
@@ -63,6 +65,8 @@ export type Lead = {
     date: string;
   }[];
 };
+// (Above) Activities is not being used because I took that feature out
+// but I might bring it back so I left it in the type
 
 interface LeadDetailsModalProps {
   lead: Lead | null;
@@ -141,6 +145,7 @@ export function LeadDetailsModal({
         temperature: editedLead.temperature,
         value: editedLead.value,
         assignedTo: editedLead.assignedTo,
+        group: editedLead.group,
         lastContact: editedLead.lastContact,
       });
 

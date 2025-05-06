@@ -95,7 +95,11 @@ export default function LeadsPage() {
       </div>
       {/* Pass selectedGroup to LeadsTable */}
       <LeadsTable selectedGroup={selectedGroup} />
-      <AddNewLeadModal isOpen={isAddModalOpen} onClose={closeAddModal} />
+      <AddNewLeadModal
+        isOpen={isAddModalOpen}
+        onClose={closeAddModal}
+        selectedGroup={selectedGroup}
+      />
       <AddNewCollectionModal
         isOpen={isAddCollectionModalOpen}
         onClose={closeAddCollectionModal}
