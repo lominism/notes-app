@@ -57,6 +57,10 @@ export default function LeadsPage() {
     setRefreshKey((prevKey) => prevKey + 1);
   };
 
+  const handleCollectionAdded = (newCollectionName: string) => {
+    setSelectedGroup(newCollectionName); // Set the new collection as the selected group
+  };
+
   return (
     <div key={refreshKey} className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between">
@@ -103,6 +107,7 @@ export default function LeadsPage() {
       <AddNewCollectionModal
         isOpen={isAddCollectionModalOpen}
         onClose={closeAddCollectionModal}
+        onCollectionAdded={handleCollectionAdded}
       />
     </div>
   );

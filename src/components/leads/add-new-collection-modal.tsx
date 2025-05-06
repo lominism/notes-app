@@ -7,9 +7,11 @@ import { db } from "@/lib/firebase";
 export function AddNewCollectionModal({
   isOpen,
   onClose,
+  onCollectionAdded,
 }: {
   isOpen: boolean;
   onClose: () => void;
+  onCollectionAdded: (collectionName: string) => void; // New callback prop
 }) {
   const [collectionName, setCollectionName] = useState("");
   const [error, setError] = useState("");
@@ -38,6 +40,7 @@ export function AddNewCollectionModal({
         notes: "",
       });
 
+      onCollectionAdded(collectionName); // Notify parent of the new collection
       setCollectionName(""); // Reset the input
       setError(""); // Clear any errors
       onClose(); // Close the modal

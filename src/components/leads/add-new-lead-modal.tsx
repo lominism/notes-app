@@ -51,6 +51,7 @@ export function AddNewLeadModal({
   const [newLead, setNewLead] = useState({
     name: "",
     company: "",
+    project: "",
     email: "",
     phone: "",
     status: "New",
@@ -122,8 +123,17 @@ export function AddNewLeadModal({
             <Card>
               <CardHeader className="pb-2 flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle className="text-base">Lead Information</CardTitle>
-                  <CardDescription>Contact and company details</CardDescription>
+                  <label htmlFor="project" className="text-sm font-medium">
+                    Project
+                  </label>
+                  <Input
+                    id="project"
+                    value={newLead.project}
+                    onChange={(e) =>
+                      handleInputChange("project", e.target.value)
+                    }
+                    className="w-[500px]"
+                  />
                 </div>
                 <Button
                   size="sm"

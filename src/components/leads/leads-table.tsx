@@ -140,10 +140,8 @@ export default function LeadsTable({
     new Set(leads.map((lead) => lead.temperature))
   );
 
-  console.log("sources", sources);
-
   return (
-    <Card>
+    <Card className="max-w-dvw mx-auto">
       <CardHeader>
         {/* <CardTitle>Leads</CardTitle> was removed for now*/}
         <div className="flex flex-col space-y-2 md:flex-row md:items-center md:justify-between md:space-y-0">
@@ -217,11 +215,12 @@ export default function LeadsTable({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="rounded-md border">
+        <div className="rounded-md border max-w-full mx-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Company</TableHead>
+                <TableHead>Project</TableHead>
                 <TableHead>Contact</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Temp</TableHead>
@@ -235,6 +234,9 @@ export default function LeadsTable({
               {filteredLeads.map((lead) => (
                 <TableRow key={lead.id}>
                   <TableCell className="font-medium">{lead.company}</TableCell>
+                  <TableCell className="whitespace-normal break-words max-w-[200px]">
+                    {lead.project || "N/A"}
+                  </TableCell>
                   <TableCell>
                     <div>
                       <div className="font-medium">{lead.name}</div>

@@ -48,6 +48,7 @@ export type Lead = {
   id: string;
   name: string;
   company: string;
+  project: string;
   email: string;
   phone: string;
   status: string;
@@ -115,6 +116,16 @@ export function LeadDetailsModal({
 
   if (!lead) return null;
 
+  // Function to cancel if modal closes
+  const handleClose = () => {
+    if (lead) {
+      setEditedLead(lead); // Reset editedLead to the original lead data
+    }
+    setIsEditingDetails(false); // Exit edit mode for details
+    setIsEditingNotes(false); // Exit edit mode for notes
+    onClose(); // Call the parent onClose function to close the modal
+  };
+
   // Function to save notes
   const saveNotes = async () => {
     if (!lead) return;
@@ -138,6 +149,7 @@ export function LeadDetailsModal({
       await updateDoc(leadRef, {
         name: editedLead.name,
         company: editedLead.company,
+        project: editedLead.project,
         email: editedLead.email,
         phone: editedLead.phone,
         status: editedLead.status,
@@ -172,11 +184,11 @@ export function LeadDetailsModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl flex items-center justify-between">
-            <span>{lead.name}</span>
+            <span>{lead.company}</span>
             <Badge
               className={
                 statusColors[lead.status] || "bg-gray-100 text-gray-800"
@@ -185,7 +197,7 @@ export function LeadDetailsModal({
               {lead.status}
             </Badge>
           </DialogTitle>
-          <DialogDescription>{lead.company}</DialogDescription>
+          <DialogDescription>{lead.project}</DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="details" className="w-full">
@@ -198,8 +210,27 @@ export function LeadDetailsModal({
             <Card>
               <CardHeader className="pb-2 flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle className="text-base">Lead Information</CardTitle>
-                  <CardDescription>Contact and company details</CardDescription>
+                  {isEditingDetails && editedLead ? (
+                    <div className="space-y-1">
+                      <label htmlFor="project" className="text-sm font-medium">
+                        Project
+                      </label>
+                      <Input
+                        id="project"
+                        value={editedLead.project}
+                        onChange={(e) =>
+                          handleInputChange("project", e.target.value)
+                        }
+                        className="w-[500px]"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex items-center">
+                      <span className="font-bold ml-2">
+                        {lead.project || "N/A"}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 {isEditingDetails ? (
                   <Button
