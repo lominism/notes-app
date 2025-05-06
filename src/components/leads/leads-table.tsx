@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -47,7 +54,11 @@ const temperatureColors: Record<string, string> = {
   Cold: "bg-blue-100 text-blue-800",
 };
 
-export default function LeadsTable() {
+export default function LeadsTable({
+  selectedGroup,
+}: {
+  selectedGroup: string | null;
+}) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -60,7 +71,13 @@ export default function LeadsTable() {
   useEffect(() => {
     const fetchLeads = async () => {
       const leadsCollection = collection(db, "leads");
-      const snapshot = await getDocs(leadsCollection);
+
+      // Query leads based on the selected group
+      const q = selectedGroup
+        ? query(leadsCollection, where("group", "==", selectedGroup))
+        : leadsCollection; // If no group is selected, fetch all leads
+
+      const snapshot = await getDocs(q);
       const fetchedLeads = snapshot.docs.map((doc) => ({
         id: doc.id, // Use Firestore document ID as the lead ID
         ...doc.data(),
@@ -69,7 +86,7 @@ export default function LeadsTable() {
     };
 
     fetchLeads();
-  }, []);
+  }, [selectedGroup]); // Refetch leads when selectedGroup changes
 
   // Function to open the modal with a specific lead
   const openLeadDetails = (lead: Lead) => {
@@ -124,10 +141,9 @@ export default function LeadsTable() {
   );
 
   return (
-    <Card>
-      {/* The rest of your LeadsTable component remains unchanged */}
+    <Card className="max-w-dvw mx-auto">
       <CardHeader>
-        <CardTitle>All Leads</CardTitle>
+        {/* <CardTitle>Leads</CardTitle> was removed for now*/}
         <div className="flex flex-col space-y-2 md:flex-row md:items-center md:justify-between md:space-y-0">
           <div className="relative w-full md:w-64">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -199,11 +215,12 @@ export default function LeadsTable() {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="rounded-md border">
+        <div className="rounded-md border max-w-full mx-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Company</TableHead>
+                <TableHead>Project</TableHead>
                 <TableHead>Contact</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Temp</TableHead>
@@ -217,6 +234,9 @@ export default function LeadsTable() {
               {filteredLeads.map((lead) => (
                 <TableRow key={lead.id}>
                   <TableCell className="font-medium">{lead.company}</TableCell>
+                  <TableCell className="whitespace-normal break-words max-w-[200px]">
+                    {lead.project || "N/A"}
+                  </TableCell>
                   <TableCell>
                     <div>
                       <div className="font-medium">{lead.name}</div>
@@ -241,7 +261,7 @@ export default function LeadsTable() {
                   </TableCell>
                   <TableCell>{lead.source}</TableCell>
                   <TableCell className="text-right">
-                    ${lead.value.toLocaleString()}
+                    ฿{lead.value.toLocaleString()}
                   </TableCell>
                   <TableCell>
                     {new Date(lead.lastContact).toLocaleDateString()}
