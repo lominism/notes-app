@@ -21,7 +21,7 @@ export default function RegisterPage() {
     e.preventDefault();
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      router.push("/dashboard");
+      router.push("/leads");
     } catch (err: any) {
       setError("Registration failed: " + err.message);
     }
@@ -31,7 +31,7 @@ export default function RegisterPage() {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-      router.push("/dashboard");
+      router.push("/leads");
     } catch (err: any) {
       setError("Google sign-in failed: " + err.message);
     }

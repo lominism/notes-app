@@ -21,7 +21,7 @@ export default function HomePage() {
 
   const handleRedirect = (path: string) => {
     if (isLoggedIn) {
-      router.push("/dashboard"); // Redirect to dashboard if logged in
+      router.push("/leads"); // Redirect to leads if logged in
     } else {
       router.push(path); // Otherwise, navigate to the specified path
     }

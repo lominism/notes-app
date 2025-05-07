@@ -93,15 +93,18 @@ export function UserInfo() {
 
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
+              {/* Somehow if you don't use "asChild", icon and word won't be on the same line*/}
               <DropdownMenuItem asChild>
                 <Link href="/settings">
                   <BadgeCheck className="mr-2 h-4 w-4" />
                   Settings
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard className="mr-2 h-4 w-4" />
-                Billing
+              <DropdownMenuItem asChild>
+                <Link href="/billing">
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Billing
+                </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

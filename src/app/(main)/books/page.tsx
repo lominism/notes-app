@@ -1,3 +1,6 @@
+// I made this page as a test page to check the database
+// It's no longer being used but I'm keeping it here for testing in the future
+
 "use client";
 
 import { useEffect, useState } from "react";
