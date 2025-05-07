@@ -1,33 +1,17 @@
 [
     {
-      "title": "Kanban",
-      "url": "#",
-      "items": [
-        {
-          "title": "Kanban Board",
-          "url": "/kanban",
-          "isActive": true
-        }
-      ]
-    },
-    {
-      "title": "CRM",
+      "title": "Tools",
       "url": "#",
       "items": [
         {
           "title": "Leads",
           "url": "/leads",
           "isActive": true
-        }
-      ]
-    },
-    {
-      "title": "Test Area",
-      "url": "#",
-      "items": [
+        },
         {
-          "title": "Books",
-          "url": "/books"
+          "title": "Kanban Board",
+          "url": "/kanban",
+          "isActive": true
         }
       ]
     }
