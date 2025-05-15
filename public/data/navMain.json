@@ -9,6 +9,11 @@
           "isActive": true
         },
         {
+          "title": "Edit Groups",
+          "url": "/groups",
+          "isActive": true
+        },
+        {
           "title": "Kanban Board",
           "url": "/kanban",
           "isActive": true
