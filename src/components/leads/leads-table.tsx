@@ -119,7 +119,8 @@ export default function LeadsTable({
     const matchesSearch =
       lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.email.toLowerCase().includes(searchTerm.toLowerCase());
+      lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead.assignedTo?.toLowerCase().includes(searchTerm.toLowerCase()); // Added assignedTo so Mon can see who's working on it
 
     const matchesStatus =
       statusFilter === "all" || lead.status === statusFilter;
@@ -224,7 +225,7 @@ export default function LeadsTable({
                 <TableHead>Contact</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Temp</TableHead>
-                <TableHead>Source</TableHead>
+                <TableHead>Assigned To</TableHead>
                 <TableHead className="text-right">Value</TableHead>
                 <TableHead>Last Contact</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -259,7 +260,7 @@ export default function LeadsTable({
                       {lead.temperature}
                     </Badge>
                   </TableCell>
-                  <TableCell>{lead.source}</TableCell>
+                  <TableCell>{lead.assignedTo}</TableCell>
                   <TableCell className="text-right">
                     ฿{lead.value.toLocaleString()}
                   </TableCell>

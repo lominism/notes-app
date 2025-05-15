@@ -270,7 +270,9 @@ export function AddNewLeadModal({
                         onChange={(e) =>
                           handleInputChange(
                             "value",
-                            Number.parseFloat(e.target.value)
+                            e.target.value === ""
+                              ? ""
+                              : Number.parseFloat(e.target.value)
                           )
                         }
                       />
