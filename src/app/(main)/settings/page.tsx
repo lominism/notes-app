@@ -1,134 +1,139 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { auth, storage } from "@/lib/firebase";
-import { updateProfile, onAuthStateChanged } from "firebase/auth";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
+import { auth, storage } from "@/lib/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { updateProfile } from "firebase/auth";
 
 export default function SettingsPage() {
   const [user, setUser] = useState(auth.currentUser);
-  const [name, setName] = useState(user?.displayName ?? "");
-  const [photoURL, setPhotoURL] = useState(user?.photoURL ?? "");
-  const [preview, setPreview] = useState(user?.photoURL ?? "");
-  const [success, setSuccess] = useState(false);
+  const [photoURL, setPhotoURL] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState(user?.displayName ?? "");
+  const [email, setEmail] = useState(user?.email ?? "");
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Listen for user updates
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (updatedUser) => {
-      setUser(updatedUser);
-      setName(updatedUser?.displayName ?? "");
-      setPhotoURL(updatedUser?.photoURL ?? "");
-      setPreview(updatedUser?.photoURL ?? "");
+    const unsubscribe = auth.onAuthStateChanged((u) => {
+      setUser(u);
+      setDisplayName(u?.displayName ?? "");
+      setEmail(u?.email ?? "");
+      if (u) {
+        fetchProfilePic(u.uid);
+      } else {
+        setPhotoURL(null);
+      }
     });
     return () => unsubscribe();
+    // eslint-disable-next-line
   }, []);
+
+  const fetchProfilePic = async (uid: string) => {
+    try {
+      const storageRef = ref(storage, `profile-pictures/${uid}.jpg`);
+      const url = await getDownloadURL(storageRef);
+      setPhotoURL(url);
+    } catch (err) {
+      setPhotoURL(null);
+    }
+  };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
-
     setUploading(true);
-    const storageRef = ref(storage, `profile-pictures/${user.uid}.jpg`);
-    await uploadBytes(storageRef, file);
-    const url = await getDownloadURL(storageRef);
-
-    // Add a cache-busting query parameter
-    const cacheBustedUrl = `${url}?t=${Date.now()}`;
-
-    setPhotoURL(cacheBustedUrl);
-    setPreview(cacheBustedUrl);
+    setError(null);
+    try {
+      const storageRef = ref(storage, `profile-pictures/${user.uid}.jpg`);
+      await uploadBytes(storageRef, file);
+      fetchProfilePic(user.uid);
+    } catch (err: any) {
+      setError("Failed to upload image.");
+    }
     setUploading(false);
   };
 
   const handleSave = async () => {
     if (!user) return;
-
+    setSaving(true);
+    setError(null);
     try {
       await updateProfile(user, {
-        displayName: name,
-        photoURL: photoURL,
+        displayName,
+        photoURL: photoURL ?? undefined,
       });
-
+      await user.reload();
+      setUser(auth.currentUser);
       setSuccess(true);
-    } catch (error) {
-      console.error("Error updating profile:", error);
+      setTimeout(() => setSuccess(false), 2000);
+    } catch (err: any) {
+      setError("Failed to update profile.");
     }
+    setSaving(false);
   };
 
   return (
-    <div className="max-w-xl mx-auto p-6">
-      <h1 className="text-3xl font-semibold mb-6 text-center">
-        Account Settings
-      </h1>
-
-      {/* Profile Image Display */}
-      <div className="flex flex-col items-center mb-6 relative">
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="relative group"
-          aria-label="Change profile picture"
-        >
-          {preview?.trim() ? (
-            <Image
-              src={preview}
-              alt="Profile preview"
-              width={96}
-              height={96}
-              className="rounded-full border shadow transition-opacity group-hover:opacity-80 object-cover"
-              style={{ aspectRatio: "1 / 1" }} // Ensures the image is square
-            />
-          ) : (
-            <div className="h-24 w-24 rounded-full border shadow flex items-center justify-center bg-muted text-muted-foreground text-sm">
-              Upload
-            </div>
-          )}
-          <span className="absolute bottom-0 right-0 text-xs bg-primary text-white rounded px-1 py-0.5 opacity-70 group-hover:opacity-100">
-            Upload
-          </span>
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleImageUpload}
+    <div className="max-w-xl mx-auto p-8 flex flex-col items-center">
+      <h1 className="text-2xl font-semibold mb-8">Profile Settings</h1>
+      <div className="mb-6">
+        <Image
+          src={photoURL || "/images/avatar-placeholder.png"}
+          alt="Profile"
+          width={128}
+          height={128}
+          className="rounded-full border shadow object-cover"
+          style={{ aspectRatio: "1 / 1" }}
+          priority
         />
-        {uploading && (
-          <p className="text-sm text-muted-foreground mt-1">Uploading...</p>
-        )}
       </div>
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        className="bg-primary text-white text-sm py-1 px-3 rounded shadow hover:bg-primary/80 transition mb-6"
+        disabled={uploading}
+      >
+        {uploading ? "Uploading..." : "Upload Picture"}
+      </button>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleImageUpload}
+      />
 
-      {/* Display Name */}
-      <div className="mb-5">
+      <div className="w-full mb-4">
         <Label className="mb-1 block">Display Name</Label>
         <Input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
           placeholder="Your display name"
+          disabled={saving}
         />
       </div>
-
-      {/* Email */}
-      <div className="mb-5">
+      <div className="w-full mb-6">
         <Label className="mb-1 block">Email</Label>
-        <Input value={user?.email ?? ""} disabled />
+        <Input value={email} disabled />
       </div>
-
-      {/* Save Button */}
-      <Button onClick={handleSave} disabled={uploading}>
-        {uploading ? "Uploading..." : "Save Changes"}
+      <Button
+        onClick={handleSave}
+        disabled={saving || uploading}
+        className="w-full"
+      >
+        {saving ? "Saving..." : "Save Changes"}
       </Button>
-
       {success && (
         <p className="text-green-500 mt-3 text-sm">✅ Changes saved</p>
       )}
+      {error && <p className="text-red-500 mt-3 text-sm">{error}</p>}
     </div>
   );
 }

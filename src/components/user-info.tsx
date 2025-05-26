@@ -1,11 +1,13 @@
 "use client";
 
-import React from "react";
+import { useEffect, useState } from "react";
+import { storage } from "@/lib/firebase";
+import { ref, getDownloadURL } from "firebase/storage";
+import { useAuth } from "@/context/AuthContext";
 import { BadgeCheck, CreditCard, LogOut, ChevronsUpDown } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { logout } from "@/lib/auth";
-import { auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -27,29 +29,28 @@ import {
 export function UserInfo() {
   const router = useRouter();
   const { isMobile } = useSidebar();
-  const [user, setUser] = React.useState(() => auth.currentUser);
+  const { currentUser: user } = useAuth();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
-  React.useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (updatedUser) => {
-      setUser(updatedUser);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      router.push("/");
-    } catch (error) {
-      console.error("Logout failed:", error);
+  useEffect(() => {
+    if (user) {
+      const storageRef = ref(storage, `profile-pictures/${user.uid}.jpg`);
+      getDownloadURL(storageRef)
+        .then(setAvatarUrl)
+        .catch(() => setAvatarUrl(null));
     }
-  };
+  }, [user]);
 
   if (!user) return null;
 
   const displayName = user.displayName || "Unnamed";
   const email = user.email || "no-email";
-  const avatar = user.photoURL || "/images/avatar-placeholder.png";
+
+  // Logout handler
+  const handleLogout = async () => {
+    await logout();
+    router.push("/login");
+  };
 
   return (
     <SidebarMenu>
@@ -61,7 +62,10 @@ export function UserInfo() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={avatar} alt={displayName} />
+                <AvatarImage
+                  src={avatarUrl || "/images/avatar-placeholder.png"}
+                  alt={displayName}
+                />
                 <AvatarFallback className="rounded-lg">👤</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
@@ -81,7 +85,10 @@ export function UserInfo() {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={avatar} alt={displayName} />
+                  <AvatarImage
+                    src={avatarUrl || "/images/avatar-placeholder.png"}
+                    alt={displayName}
+                  />
                   <AvatarFallback className="rounded-lg">👤</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
