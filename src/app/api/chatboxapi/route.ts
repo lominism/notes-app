@@ -19,8 +19,8 @@ export async function POST(req: NextRequest) {
     const context = leads
       .map(
         (lead) =>
-          `Name: ${lead.name}, Company: ${lead.company}, Email: ${lead.email}, Status: ${lead.status}, Group: ${lead.group}, Notes: ${lead.notes || ""}`
-      )
+          `Name: ${lead.name}, Company: ${lead.company}, Project: ${lead.project}, Email: ${lead.email}, Phone: ${lead.phone}, Status: ${lead.status}, Source: ${lead.source}, Temperature: ${lead.temperature}, Value: ${lead.value}, Assigned To: ${lead.assignedTo}, Group: ${lead.group}, Last Contact: ${lead.lastContact}, Notes: ${lead.notes || ""}`
+    )
       .join("\n");
 
     // Ask OpenAI
