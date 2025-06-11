@@ -14,6 +14,11 @@
           "isActive": true
         },
         {
+          "title": "Chatbox",
+          "url": "/chatbox",
+          "isActive": true
+        },
+        {
           "title": "Kanban Board",
           "url": "/kanban",
           "isActive": true
