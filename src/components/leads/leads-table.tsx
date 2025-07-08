@@ -220,9 +220,11 @@ export default function LeadsTable({
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>#</TableHead>
                 <TableHead>Company</TableHead>
                 <TableHead>Project</TableHead>
                 <TableHead>Contact</TableHead>
+                <TableHead>Phone</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Temp</TableHead>
                 <TableHead>Assigned To</TableHead>
@@ -232,8 +234,9 @@ export default function LeadsTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredLeads.map((lead) => (
+              {filteredLeads.map((lead, index) => (
                 <TableRow key={lead.id}>
+                  <TableCell>{index + 1}</TableCell>
                   <TableCell className="font-medium">{lead.company}</TableCell>
                   <TableCell className="whitespace-normal break-words max-w-[200px]">
                     {lead.project || "N/A"}
@@ -246,6 +249,7 @@ export default function LeadsTable({
                       </div>
                     </div>
                   </TableCell>
+                  <TableCell>{lead.phone}</TableCell>
                   <TableCell>
                     <Badge
                       className={
