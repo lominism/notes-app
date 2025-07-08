@@ -6,6 +6,9 @@ export default function ChatBoxPage() {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [loading, setLoading] = useState(false);
+  const [history, setHistory] = useState<
+    { question: string; answer: string }[]
+  >([]);
 
   const handleAsk = async () => {
     setLoading(true);
@@ -17,6 +20,10 @@ export default function ChatBoxPage() {
     });
     const data = await res.json();
     setAnswer(data.answer);
+    setHistory((prev) => [
+      { question, answer: data.answer },
+      ...prev.slice(0, 2), // Keep only the last two
+    ]);
     setQuestion("");
     setLoading(false);
   };
@@ -44,6 +51,14 @@ export default function ChatBoxPage() {
           <div>{answer}</div>
         </div>
       )}
+      {history.map((item, idx) => (
+        <div key={idx} className="mt-4 p-2 bg-gray-50 rounded border">
+          <div className="font-semibold">Q: {item.question}</div>
+          <div className="mt-1">
+            <strong>A:</strong> {item.answer}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
