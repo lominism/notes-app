@@ -19,7 +19,8 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton"; // Import ShadCN's Skeleton component
+import { Skeleton } from "@/components/ui/skeleton";
+import { GroupMultiSelect } from "@/components/GroupMultiSelect";
 
 export default function LeadsPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -29,6 +30,8 @@ export default function LeadsPage() {
   const [groups, setGroups] = useState<string[]>([]); // State to store unique group values
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null); // State for selected group
   const [loading, setLoading] = useState(false); // State to track loading
+  const [selectedGroups, setSelectedGroups] = useState<string[] | null>(null);
+  const [showLeads, setShowLeads] = useState(false);
 
   // Fetch unique group values from Firestore
   useEffect(() => {
@@ -76,6 +79,12 @@ export default function LeadsPage() {
     setSelectedGroup(newCollectionName); // Set the new collection as the selected group
   };
 
+  // Function to handle group selection from GroupMultiSelect
+  const handleGroupSubmit = (groups: string[] | null) => {
+    setSelectedGroups(groups);
+    setShowLeads(true);
+  };
+
   // Function to delete all leads in the selected group
   const deleteGroup = async () => {
     if (!selectedGroup) {
@@ -114,30 +123,14 @@ export default function LeadsPage() {
 
   return (
     <div key={refreshKey} className="flex-1 space-y-4 p-8 pt-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-start space-x-4 mb-6">
         <h2 className="text-3xl font-bold tracking-tight">Leads</h2>
         <div className="flex space-x-4">
-          {/* Delete Group Button */}
-          <button
-            className="bg-destructive text-white hover:bg-red-600 rounded-md px-4 py-2 text-sm font-medium disabled:bg-destructive/50 disabled:cursor-not-allowed"
-            onClick={deleteGroup}
-            disabled={!selectedGroup || loading} // Disable if no group is selected
-          >
-            Delete Group
-          </button>
-          {/* Group Select Dropdown */}
-          <Select value={selectedGroup || ""} onValueChange={setSelectedGroup}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="All Groups" />
-            </SelectTrigger>
-            <SelectContent>
-              {groups.map((group) => (
-                <SelectItem key={group} value={group}>
-                  {group}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <GroupMultiSelect
+            groups={groups}
+            onSubmit={handleGroupSubmit}
+            loading={loading}
+          />
 
           {/* Add Collection Button */}
           <button
@@ -165,7 +158,7 @@ export default function LeadsPage() {
           <Skeleton className="h-8 w-full" />
         </div>
       ) : (
-        <LeadsTable selectedGroup={selectedGroup} />
+        <LeadsTable selectedGroups={selectedGroups} />
       )}
 
       <AddNewLeadModal

@@ -55,9 +55,9 @@ const temperatureColors: Record<string, string> = {
 };
 
 export default function LeadsTable({
-  selectedGroup,
+  selectedGroups,
 }: {
-  selectedGroup: string | null;
+  selectedGroups: string[] | null;
 }) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -71,22 +71,25 @@ export default function LeadsTable({
   useEffect(() => {
     const fetchLeads = async () => {
       const leadsCollection = collection(db, "leads");
+      let q;
 
-      // Query leads based on the selected group
-      const q = selectedGroup
-        ? query(leadsCollection, where("group", "==", selectedGroup))
-        : leadsCollection; // If no group is selected, fetch all leads
+      if (selectedGroups && selectedGroups.length > 0) {
+        // Firestore 'in' queries support up to 10 values
+        q = query(leadsCollection, where("group", "in", selectedGroups));
+      } else {
+        q = leadsCollection;
+      }
 
       const snapshot = await getDocs(q);
       const fetchedLeads = snapshot.docs.map((doc) => ({
-        id: doc.id, // Use Firestore document ID as the lead ID
+        id: doc.id,
         ...doc.data(),
       })) as Lead[];
       setLeads(fetchedLeads);
     };
 
     fetchLeads();
-  }, [selectedGroup]); // Refetch leads when selectedGroup changes
+  }, [selectedGroups]);
 
   // Function to open the modal with a specific lead
   const openLeadDetails = (lead: Lead) => {

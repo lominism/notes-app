@@ -7,7 +7,8 @@ import {
   query,
   updateDoc,
   where,
-  doc,
+  getDoc,
+  deleteDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import {
@@ -79,6 +80,38 @@ export default function GroupTable() {
     }
   };
 
+  const handleDeleteGroup = async (groupToDelete: string) => {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete the group "${groupToDelete}" and all its leads?`
+      )
+    ) {
+      return;
+    }
+    try {
+      const leadsCollection = collection(db, "leads");
+      const q = query(leadsCollection, where("group", "==", groupToDelete));
+      const snapshot = await getDocs(q);
+
+      // Delete all documents with the group name
+      const deletePromises = snapshot.docs.map((doc) => deleteDoc(doc.ref));
+      await Promise.all(deletePromises);
+
+      // Remove the group from local state
+      setGroups((prevGroups) => prevGroups.filter((g) => g !== groupToDelete));
+
+      // Optionally, reset editing state if needed
+      if (editingGroup === groupToDelete) {
+        setEditingGroup(null);
+        setNewGroupName("");
+      }
+
+      console.log(`Group "${groupToDelete}" and its leads deleted.`);
+    } catch (error) {
+      console.error("Error deleting group:", error);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Edit Group Names</h1>
@@ -112,13 +145,23 @@ export default function GroupTable() {
                     Save
                   </Button>
                 ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleEditGroup(group)}
-                  >
-                    Edit
-                  </Button>
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEditGroup(group)}
+                      className="mr-2"
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleDeleteGroup(group)}
+                    >
+                      Delete
+                    </Button>
+                  </>
                 )}
               </TableCell>
             </TableRow>
