@@ -12,13 +12,6 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GroupMultiSelect } from "@/components/GroupMultiSelect";
 
@@ -28,36 +21,66 @@ export default function LeadsPage() {
     useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [groups, setGroups] = useState<string[]>([]); // State to store unique group values
-  const [selectedGroup, setSelectedGroup] = useState<string | null>(null); // State for selected group
   const [loading, setLoading] = useState(false); // State to track loading
-  const [selectedGroups, setSelectedGroups] = useState<string[] | null>(null);
   const [showLeads, setShowLeads] = useState(false);
+  const [selectedGroups, setSelectedGroups] = useState<string[] | null>(null);
 
-  // Fetch unique group values from Firestore
+  // Fetch unique group values from Firestore including null entries
   useEffect(() => {
     const fetchGroups = async () => {
-      setLoading(true); // Start loading
+      setLoading(true);
       try {
         const leadsCollection = collection(db, "leads");
         const snapshot = await getDocs(leadsCollection);
 
-        // Extract unique group values
+        // Extract unique group values, including null entries
+        const allGroups = snapshot.docs.map((doc) => doc.data().group);
         const uniqueGroups = Array.from(
-          new Set(snapshot.docs.map((doc) => doc.data().group).filter(Boolean)) // Filter out undefined/null
+          new Set(allGroups.filter(Boolean))
         ) as string[];
+
+        // Check if there are any null/undefined groups
+        const hasNullGroups = allGroups.some((group) => !group);
+
+        // Add "Unassigned" to the list if there are null groups
+        if (hasNullGroups) {
+          uniqueGroups.unshift("Unassigned"); // Add at the beginning
+        }
 
         setGroups(uniqueGroups);
       } catch (error) {
         console.error("Error fetching groups:", error);
       } finally {
-        setLoading(false); // Stop loading
+        setLoading(false);
       }
     };
 
     fetchGroups();
-  }, [refreshKey]); // Refetch groups when refreshKey changes
+  }, [refreshKey]);
 
   const openAddModal = () => {
+    console.log("Current selectedGroups:", selectedGroups); // Add this debug line
+
+    // Check if no groups are selected OR if "Unassigned" is selected
+    if (
+      !selectedGroups ||
+      selectedGroups.length === 0 ||
+      selectedGroups.includes("Unassigned")
+    ) {
+      alert(
+        "Please select a valid group before adding a new lead. 'Unassigned' cannot be used to add new leads."
+      );
+      return;
+    }
+
+    // Check if more than one group is selected
+    if (selectedGroups.length > 1) {
+      alert("Please select only ONE group before adding a new lead.");
+      return;
+    }
+
+    // If exactly one group is selected, open the modal
+    console.log("Opening modal with group:", selectedGroups[0]); // Add this debug line
     setIsAddModalOpen(true);
   };
 
@@ -76,49 +99,14 @@ export default function LeadsPage() {
   };
 
   const handleCollectionAdded = (newCollectionName: string) => {
-    setSelectedGroup(newCollectionName); // Set the new collection as the selected group
+    setRefreshKey((prevKey) => prevKey + 1);
   };
 
   // Function to handle group selection from GroupMultiSelect
   const handleGroupSubmit = (groups: string[] | null) => {
+    console.log("Selected groups:", groups); // Add this debug line
     setSelectedGroups(groups);
     setShowLeads(true);
-  };
-
-  // Function to delete all leads in the selected group
-  const deleteGroup = async () => {
-    if (!selectedGroup) {
-      alert("Please select a group to delete.");
-      return;
-    }
-
-    const confirmDelete = window.confirm(
-      `Are you sure you want to delete all leads in the "${selectedGroup}" group? This action cannot be undone.`
-    );
-
-    if (!confirmDelete) return;
-
-    try {
-      setLoading(true); // Start loading
-      const leadsCollection = collection(db, "leads");
-      const q = query(leadsCollection, where("group", "==", selectedGroup));
-      const snapshot = await getDocs(q);
-
-      // Delete each document in the group
-      const deletePromises = snapshot.docs.map((doc) => deleteDoc(doc.ref));
-      await Promise.all(deletePromises);
-
-      console.log(
-        `All leads in the "${selectedGroup}" group have been deleted.`
-      );
-      setRefreshKey((prevKey) => prevKey + 1); // Refresh the UI
-      setSelectedGroup(null); // Reset the selected group
-    } catch (error) {
-      console.error("Error deleting group:", error);
-      alert("Failed to delete the group. Please try again.");
-    } finally {
-      setLoading(false); // Stop loading
-    }
   };
 
   return (
@@ -164,7 +152,7 @@ export default function LeadsPage() {
       <AddNewLeadModal
         isOpen={isAddModalOpen}
         onClose={closeAddModal}
-        selectedGroup={selectedGroup}
+        selectedGroup={selectedGroups?.[0] || null} // Pass the first (and only) selected group
       />
       <AddNewCollectionModal
         isOpen={isAddCollectionModalOpen}

@@ -41,7 +41,7 @@ import {
 } from "@/components/ui/select";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { group } from "console";
+import { collection, getDocs } from "firebase/firestore";
 
 // Define the Lead type for better type safety
 export type Lead = {
@@ -102,6 +102,27 @@ export function LeadDetailsModal({
   const [notesContent, setNotesContent] = useState("");
   const [isEditingDetails, setIsEditingDetails] = useState(false);
   const [editedLead, setEditedLead] = useState<Lead | null>(null);
+  const [groups, setGroups] = useState<string[]>([]);
+
+  // Fetch groups from Firestore when the modal opens
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        const leadsCollection = collection(db, "leads");
+        const snapshot = await getDocs(leadsCollection);
+        const uniqueGroups = Array.from(
+          new Set(snapshot.docs.map((doc) => doc.data().group).filter(Boolean))
+        ) as string[];
+        setGroups(uniqueGroups);
+      } catch (error) {
+        console.error("Error fetching groups:", error);
+      }
+    };
+
+    if (isOpen) {
+      fetchGroups();
+    }
+  }, [isOpen]);
 
   // Update state when lead changes
   useEffect(() => {
@@ -309,6 +330,28 @@ export function LeadDetailsModal({
                           }
                         />
                       </div>
+                      <div className="space-y-1">
+                        <label htmlFor="group" className="text-sm font-medium">
+                          Group
+                        </label>
+                        <Select
+                          value={editedLead.group}
+                          onValueChange={(value) =>
+                            handleInputChange("group", value)
+                          }
+                        >
+                          <SelectTrigger id="group">
+                            <SelectValue placeholder="Select group" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {groups.map((group) => (
+                              <SelectItem key={group} value={group}>
+                                {group}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                     <div className="space-y-3">
                       <div className="space-y-1">
@@ -432,6 +475,11 @@ export function LeadDetailsModal({
                         <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
                         <span className="font-medium">Phone:</span>
                         <span className="ml-2">{lead.phone}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Tag className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <span className="font-medium">Group:</span>
+                        <span className="ml-2">{lead.group || "No group"}</span>
                       </div>
                     </div>
                     <div className="space-y-3">

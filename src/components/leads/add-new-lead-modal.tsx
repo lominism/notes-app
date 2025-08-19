@@ -73,11 +73,24 @@ export function AddNewLeadModal({
 
   // Sync the group field with the selectedGroup prop
   useEffect(() => {
-    setNewLead((prev) => ({
-      ...prev,
-      group: selectedGroup, // Update the group field whenever selectedGroup changes
-    }));
-  }, [selectedGroup]);
+    if (isOpen) {
+      setNewLead({
+        name: "",
+        company: "",
+        project: "",
+        email: "",
+        phone: "",
+        status: "New",
+        source: "",
+        temperature: "Hot",
+        value: "",
+        assignedTo: "",
+        lastContact: new Date().toISOString().split("T")[0],
+        notes: "",
+        group: selectedGroup, // Use the current selectedGroup
+      });
+    }
+  }, [isOpen, selectedGroup]);
 
   // This adds a new const "leadWithID" to fix what happened with useEffect
   // I still don't undersstand how it fixed it
@@ -194,6 +207,17 @@ export function AddNewLeadModal({
                         onChange={(e) =>
                           handleInputChange("phone", e.target.value)
                         }
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label htmlFor="group" className="text-sm font-medium">
+                        Group
+                      </label>
+                      <Input
+                        id="group"
+                        value={newLead.group || "No group selected"}
+                        disabled
+                        className="bg-muted"
                       />
                     </div>
                   </div>

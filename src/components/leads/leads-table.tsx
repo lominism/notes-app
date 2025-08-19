@@ -67,24 +67,50 @@ export default function LeadsTable({
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Fetch leads from Firestore
+  // Fetch leads from Firestore including null entries
   useEffect(() => {
     const fetchLeads = async () => {
       const leadsCollection = collection(db, "leads");
-      let q;
+      let fetchedLeads: Lead[] = [];
 
       if (selectedGroups && selectedGroups.length > 0) {
-        // Firestore 'in' queries support up to 10 values
-        q = query(leadsCollection, where("group", "in", selectedGroups));
+        // Check if "Unassigned" is selected
+        const hasUnassigned = selectedGroups.includes("Unassigned");
+        const otherGroups = selectedGroups.filter(
+          (group) => group !== "Unassigned"
+        );
+
+        // Fetch leads with specific groups
+        if (otherGroups.length > 0) {
+          const q = query(leadsCollection, where("group", "in", otherGroups));
+          const snapshot = await getDocs(q);
+          fetchedLeads = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          })) as Lead[];
+        }
+
+        // Fetch leads with null/undefined groups if "Unassigned" is selected
+        if (hasUnassigned) {
+          const allSnapshot = await getDocs(leadsCollection);
+          const nullLeads = allSnapshot.docs
+            .filter((doc) => !doc.data().group) // Filter for null/undefined groups
+            .map((doc) => ({
+              id: doc.id,
+              ...doc.data(),
+            })) as Lead[];
+
+          fetchedLeads = [...fetchedLeads, ...nullLeads];
+        }
       } else {
-        q = leadsCollection;
+        // Fetch all leads if no groups selected
+        const snapshot = await getDocs(leadsCollection);
+        fetchedLeads = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Lead[];
       }
 
-      const snapshot = await getDocs(q);
-      const fetchedLeads = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Lead[];
       setLeads(fetchedLeads);
     };
 
